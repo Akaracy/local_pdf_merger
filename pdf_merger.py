@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
 import PyPDF2
-import sys
 import os 
+from pathlib import Path
 
 """-------------------------------FUNCTION----------------------------"""
 def merge_pdf(files, output_folder_path, name):
@@ -37,36 +37,52 @@ list_box = sg.Listbox(files_to_merge,
                     key = 'file_list'
                     )
 
+def main_window():
+    # Define the window's contents
+    layout = [[sg.Text("PDF to merge")],
+            [sg.Text("Input Files : "), sg.Input(key='-IN-'), sg.FileBrowse(file_types=(("PDF", "*.pdf*"),)), sg.Button("Add2Merge")],
+            [list_box],
+            [sg.Text("Output Folder : "), sg.Input(key='-OUT-'), sg.FolderBrowse()],
+            [sg.Text("Name of the new PDF : ")],
+            [sg.Input(key= '-NAME-')],
+            [sg.Button('Merge')]]
 
-# Define the window's contents
-layout = [[sg.Text("PDF to merge")],
-          [sg.Text("Input Files : "), sg.Input(key='-IN-'), sg.FileBrowse(file_types=(("PDF", "*.pdf*"),)), sg.Button("Add2Merge")],
-          [list_box],
-          [sg.Text("Output Folder : "), sg.Input(key='-OUT-'), sg.FolderBrowse()],
-          [sg.Text("Name of the new PDF : ")],
-          [sg.Input(key= '-NAME-')],
-          [sg.Button('Merge')]]
+    # Create the window
+    window = sg.Window('Local PDF Merger', layout)
 
-# Create the window
-window = sg.Window('Local PDF Merger', layout)
+    # Display and interact with the Window using an Event Loop
+    while True:
+        event, values = window.read()
+        if event == sg.WINDOW_CLOSED :
+            break
+        if event == 'Add2Merge':
+            files_to_merge.append(values['-IN-'])
+            print(files_to_merge)
+            window['file_list'].update(files_to_merge)
+        if event == 'Merge':
+            if is_valid_path(values['-OUT-']):
+                merge_pdf(files_to_merge, values['-OUT-'], values['-NAME-'])
 
-# Display and interact with the Window using an Event Loop
-while True:
-    event, values = window.read()
-    if event == sg.WINDOW_CLOSED :
-        break
-    if event == 'Add2Merge':
-        files_to_merge.append(values['-IN-'])
-        print(files_to_merge)
-        window['file_list'].update(files_to_merge)
-    if event == 'Merge':
-        if is_valid_path(values['-OUT-']):
-            merge_pdf(files_to_merge, values['-OUT-'], values['-NAME-'])
+    # Finish up by removing from the screen
+    window.close()
 
 
 
-# Finish up by removing from the screen
-window.close()
+"""-------------------------------MAIN----------------------------"""
+if __name__ == "__main__":
+    SETTINGS_PATH = Path.cwd()
+    # create the settings object and use ini format
+    settings = sg.UserSettings(
+        path=SETTINGS_PATH, filename="config.ini", use_config_file=True, convert_bools_and_none=True
+    )
+    theme = settings["GUI"]["theme"]
+    font_family = settings["GUI"]["font_family"]
+    font_size = int(settings["GUI"]["font_size"])
+    sg.theme(theme)
+    sg.set_options(font=(font_family, font_size))
+    
+    main_window()
+
 
 # test = ['/home/akara/Fun/pdf_merger/data/1.pdf', '/home/akara/Fun/pdf_merger/data/1.pdf']
 # merge_pdf(test, '/home/akara/Fun/pdf_merger/data', 'test')
